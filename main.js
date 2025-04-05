@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const {renderer, scene, camera} = mindarThree;
 
-  const loadVideo = (path) => {
+  const video = ("ar_video.mp4") => {
   return new Promise((resolve, reject) => {
     const video = document.createElement("video");
     //video.addEventListener('loadeddata', () => {
@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 }
 
-    const video = await loadVideo("ar_video.mp4");
     const texture = new THREE.VideoTexture(video);
 
     const geometry = new THREE.PlaneGeometry(1, 204/480);
