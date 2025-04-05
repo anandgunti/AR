@@ -1,4 +1,3 @@
-import {loadGLTF, loadVideo} from "libs/loader.js";
 const THREE = window.MINDAR.IMAGE.THREE;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -8,6 +7,18 @@ document.addEventListener('DOMContentLoaded', () => {
       imageTargetSrc: 'targets.mind',
     });
     const {renderer, scene, camera} = mindarThree;
+
+    export const loadVideo = (path) => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    //video.addEventListener('loadeddata', () => {
+    video.addEventListener('loadedmetadata', () => {
+      video.setAttribute('playsinline', '');
+      resolve(video);
+    });
+    video.src = path;
+  });
+}
 
     const video = await loadVideo("ar_video.mp4");
     const texture = new THREE.VideoTexture(video);
