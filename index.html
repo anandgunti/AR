@@ -1,12 +1,114 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="libs/mindar/mindar-image-three.prod.js"></script>
-    <script src="./main.js" type="module"></script>
+<head>
+    <title>Tap to Play/Pause AR Video</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.2.0/aframe.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ar.js/2.2.2/aframe-ar.min.js"></script>
+    <script src="https://unpkg.com/aframe-chromakey-material/dist/aframe-chromakey-material.min.js"></script>
     <style>
-      html, body {position: relative; margin: 0; width: 100%; height: 100%; overflow: hidden}
+        .error-message {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
     </style>
-  </head>
-  <body>
-  </body>
+</head>
+<body style="margin: 0; overflow: hidden;">
+    <div id="errorMsg" class="error-message">
+        Video format not supported. Please ensure WebM format with alpha channel.
+    </div>
+
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+        <a-assets>
+            <video 
+                id="localVideo" 
+                preload="metadata"
+                loop="true"
+                crossorigin="anonymous"
+                webkit-playsinline
+                playsinline
+                muted>
+                <source src="./T1.mp4" type="video/mp4">
+            </video>
+        </a-assets>
+        
+        <a-marker type="pattern" url="pattern-Test_AR.patt">
+    <a-video
+        id="videoPlane"
+        src="#localVideo"
+        position="0 0.1 0"
+        rotation="-90 0 0"
+        width="2"
+        height="1.5"
+        material="shader: chromakey; src: #localVideo; color: 0.7529 0.0 0.0; transparent: true; alphaTest: 1; threshold: 0.2"
+        class="clickable">
+    </a-video>
+</a-marker>
+
+        <a-entity camera>
+            <a-cursor></a-cursor>
+        </a-entity>
+    </a-scene>
+    
+    <script>
+        window.addEventListener('load', function() {
+            const marker = document.querySelector('a-marker');
+            const video = document.querySelector('#localVideo');
+            const videoPlane = document.querySelector('#videoPlane');
+            const errorMsg = document.querySelector('#errorMsg');
+
+            // Initialize first frame
+            video.addEventListener('loadedmetadata', function() {
+                video.currentTime = 0;
+                video.play().then(() => {
+                    video.pause();
+                }).catch(error => {
+                    console.log("Initial frame setup failed:", error);
+                });
+            });
+
+            // Handle click and touch interactions
+            const toggleVideoPlayback = function() {
+                if (video.paused) {
+                    video.play();
+                    console.log("Video playing");
+                } else {
+                    video.pause();
+                    console.log("Video paused");
+                }
+            };
+
+            // Add event listeners for both click and touchstart
+            videoPlane.addEventListener('click', toggleVideoPlayback);
+            videoPlane.addEventListener('touchstart', toggleVideoPlayback);
+
+            // Handle video errors
+            video.addEventListener('error', function() {
+                errorMsg.style.display = 'block';
+                setTimeout(() => {
+                    errorMsg.style.display = 'none';
+                }, 5000);
+            });
+
+            // Marker interactions
+            marker.addEventListener('markerFound', function() {
+                if (video.paused) {
+                    video.currentTime = 0;
+                }
+            });
+
+            marker.addEventListener('markerLost', function() {
+                video.pause();
+            });
+        });
+    </script>
+</body>
 </html>
