@@ -26,7 +26,12 @@
         Video format not supported. Please ensure WebM format with alpha channel.
     </div>
 
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <a-scene 
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false;" 
+        raycaster="objects: .clickable" 
+        cursor="rayOrigin: mouse;">
+        
         <a-assets>
             <video 
                 id="localVideo" 
@@ -34,48 +39,44 @@
                 loop="true"
                 crossorigin="anonymous"
                 webkit-playsinline
-                playsinline
-                >
+                playsinline>
                 <source src="./ar_video.mp4" type="video/mp4">
             </video>
         </a-assets>
-        
-        <a-marker type="pattern" url="test.patt">
-    <a-video
-        id="videoPlane"
-        src="#localVideo"
-        position="0 0.1 0"
-        rotation="-90 0 0"
-        width="2"
-        height="1.5"
-        class="clickable">
-    </a-video>
-</a-marker>
 
-        <a-entity camera>
-            
-        </a-entity>
+        <a-marker type="pattern" url="test.patt">
+            <a-video
+                id="videoPlane"
+                src="#localVideo"
+                position="0 0.1 0"
+                rotation="-90 0 0"
+                width="2"
+                height="1.5"
+                class="clickable"
+                geometry="primitive: plane"
+                material="shader: flat">
+            </a-video>
+        </a-marker>
+
+        <a-entity camera></a-entity>
     </a-scene>
-    
+
     <script>
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             const marker = document.querySelector('a-marker');
             const video = document.querySelector('#localVideo');
             const videoPlane = document.querySelector('#videoPlane');
             const errorMsg = document.querySelector('#errorMsg');
 
-            // Initialize first frame
-            video.addEventListener('loadedmetadata', function() {
+            // Load first frame
+            video.addEventListener('loadedmetadata', function () {
                 video.currentTime = 0;
-                video.play().then(() => {
-                    video.pause();
-                }).catch(error => {
-                    console.log("Initial frame setup failed:", error);
-                });
+                video.play().then(() => video.pause()).catch(console.error);
             });
 
-            // Handle click and touch interactions
-            const toggleVideoPlayback = function() {
+            // Video play/pause logic
+            const toggleVideoPlayback = function () {
+                video.muted = false; // Unmute on first interaction
                 if (video.paused) {
                     video.play();
                     console.log("Video playing");
@@ -85,26 +86,32 @@
                 }
             };
 
-            // Add event listeners for both click and touchstart
+            // Enable click/tap interaction
             videoPlane.addEventListener('click', toggleVideoPlayback);
             videoPlane.addEventListener('touchstart', toggleVideoPlayback);
 
-            // Handle video errors
-            video.addEventListener('error', function() {
+            // Optional: fallback for interaction to allow audio
+            document.body.addEventListener('click', () => {
+                video.muted = false;
+            });
+
+            // Show error if video fails
+            video.addEventListener('error', function () {
                 errorMsg.style.display = 'block';
                 setTimeout(() => {
                     errorMsg.style.display = 'none';
                 }, 5000);
             });
 
-            // Marker interactions
-            marker.addEventListener('markerFound', function() {
+            // Reset to beginning on marker found
+            marker.addEventListener('markerFound', function () {
                 if (video.paused) {
                     video.currentTime = 0;
                 }
             });
 
-            marker.addEventListener('markerLost', function() {
+            // Pause when marker lost
+            marker.addEventListener('markerLost', function () {
                 video.pause();
             });
         });
